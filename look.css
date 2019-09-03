@@ -1,0 +1,96 @@
+body {
+    margin:0px;
+    padding:0px;
+    background:#fff;
+    font-family: 'Roboto', sans-serif;
+    font-size: 30px;
+    color:rgb(56, 142, 255);
+}
+
+/* ------------------------------------------------- */
+
+.addBtn {
+    position: fixed;
+    height:100px;
+    width:100%;
+    background: rgb(56, 142, 255);
+    text-align: center;
+    color:#fff;
+    font-size: 80px;
+}
+
+.content {
+    position: fixed;
+    top:100px;
+    width:calc(100% - 80px);
+    height:calc(100% - 100px - 80px);
+    padding:40px;
+    overflow-y: scroll;
+}
+
+/* ------------------------------------------------- */
+
+.item {
+    padding:20px;
+    height:50px;
+}
+
+.item .text {
+    float: left;
+}
+
+.item .trash {
+    float: right;
+    width:50px;
+    height:50px;
+    margin-right:10px;
+    background:url('trash.png');
+    background-size: 70% 70%;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s;
+    animation: disappear_left 1s cubic-bezier(.07,.76,.31,1.02) forwards;
+}
+
+.item.edit .trash {
+    opacity: 1;
+    pointer-events: all;
+    animation: appear_left 1s cubic-bezier(.07,.76,.31,1.02) forwards;
+}
+
+.item {
+    box-shadow: 0px 0px 0px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    overflow: hidden;
+}
+.item.edit {
+    transform: translateY(-10px);
+    box-shadow: 0px 0px 20px rgba(0,0,0,0.1);
+}
+
+/* ------------------------------------------------- */
+
+.disappear {
+    height:0px;
+    margin-top:-40px;
+    opacity: 0;
+}
+
+/* ------------------------------------------------- */
+
+@keyframes appear {
+    0%{opacity: 0; transform: translateY(100px);}
+    100%{opacity: 1; transform: translateY(0px);}
+}
+
+@keyframes appear_left {
+    0%{transform: translateX(50px);}
+    100%{transform: translateX(0px);}
+}
+
+@keyframes disappear_left {
+    0%{transform: translateX(0px);}
+    100%{transform: translateX(50px);}
+}
