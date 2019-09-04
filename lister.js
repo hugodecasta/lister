@@ -39,6 +39,14 @@ function add_item() {
 
 // ------------------------------------- GX
 
+function draw_list() {
+    var rev_list = liste.slice().reverse();
+    for(var key in rev_list) {
+        var data = rev_list[key]
+        $('.content').append(create_item_GX(data))
+    }
+}
+
 function create_item_GX(text) {
     var item = $('<div>').addClass('item')
     var textJQ = $('<div>').addClass('text').html(text)
@@ -77,11 +85,8 @@ function update_liste() {
     console.log('upd')
     $('.content').html($('<div>').addClass('loading'))
     call('liste=true',function(data_liste){
-        for(var key in data_liste) {
-            var data = data_liste[key]
-            $('.content').append(create_item_GX(data))
-        }
         liste = data_liste
+        draw_list()
     })
 }
 
