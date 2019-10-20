@@ -8,6 +8,8 @@ var update_time_ms = 1000;
 
 var liste = []
 
+var liste_name = 'ma_liste'
+
 // ------------------------------------- REQ
 
 function call(attrs,ret) {
@@ -19,27 +21,31 @@ function call(attrs,ret) {
 
 // ------------------------------------- ACTIONS
 
-function remove(text) {
-    var index = liste.indexOf(text)
-    if(index < 0)
-        return
-    liste.splice(index,1)
-    call('remove='+index,function(){})
+function remove(id) {
+    for(var i in liste) {
+        var liste_item = liste[i]
+        var item_id = liste_item.id
+        if(item_id == id) {
+            liste.splice(i,1)
+            save_liste()
+            break
+        }
+    }
 }
 
 function add_item() {
-    var item = prompt("Nouvel élément", "");
-    if(item == null)
+    var text = prompt("Nouvel élément", "");
+    if(text == null)
         return
-    call('add='+item,function(){
-        update_liste()
-        inhib = true
-    })
+    var liste_item = {text:text,id:Date.now()+Math.random()}
+    liste.push(liste_item)
+    save_liste(draw_list)
 }
 
 // ------------------------------------- GX
 
 function draw_list() {
+    $('.content').html('')
     var rev_list = liste.slice().reverse();
     for(var key in rev_list) {
         var data = rev_list[key]
@@ -47,7 +53,11 @@ function draw_list() {
     }
 }
 
-function create_item_GX(text) {
+function create_item_GX(liste_item) {
+
+    var text = liste_item.text
+    var id = liste_item.id
+
     var item = $('<div>').addClass('item')
     var textJQ = $('<div>').addClass('text').html(text)
     var btnJQ = $('<div>').addClass('trash')
@@ -62,9 +72,8 @@ function create_item_GX(text) {
     })
 
     btnJQ.click(function(){
-        remove(text)
+        remove(id)
         item.addClass('disappear')
-        inhib = true
         setTimeout(function(){
             item.remove()
         },300)
@@ -75,16 +84,42 @@ function create_item_GX(text) {
 
 // ------------------------------------- ENGINE
 
+function save_liste(callback) {
+    boolMaster_write_key(liste_name, liste, callback)
+}
+
+function load_liste(callback) {
+    boolMaster_key_exists(liste_name,function(resp){
+        if(!resp) {
+            save_liste(function(){
+                callback([])
+            })
+        } else {
+            boolMaster_read_key(liste_name,callback)
+        }
+    })
+}
+
 var inhib = false
 
-function update_liste() {
+function loop_updater() {
     if(inhib) {
         inhib = false
         return
     }
-    console.log('upd')
+    inhib = true
+    load_liste(function(data_liste){
+        if(data_liste.length != liste.length) {
+            liste = data_liste
+            draw_list()
+            inhib = false
+        }
+    })
+}
+
+function update_liste() {
     $('.content').html($('<div>').addClass('loading'))
-    call('liste=true',function(data_liste){
+    load_liste(function(data_liste){
         liste = data_liste
         draw_list()
     })
@@ -92,14 +127,10 @@ function update_liste() {
 
 function init() {
     $('.addBtn').click(add_item)
+    init_boolMaster('hugocastaneda.fr/boolMaster2/api.php')
     update_liste()
-    setInterval(function(){
-        call('liste=true',function(data_liste){
-            if(data_liste.length != liste.length) {
-                update_liste()
-            }
-        })
-    },update_time_ms)
+    
+    setInterval(loop_updater,update_time_ms)
 }
 
 // ------------------------------------- MAIN
