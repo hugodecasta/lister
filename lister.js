@@ -8,7 +8,25 @@ var update_time_ms = 1000;
 
 var liste = []
 
-var liste_name = 'ma_liste'
+var storage_name = 'lister_liste_name'
+
+function liste_name() {
+    
+    var name = localStorage.getItem(storage_name)
+    while(name == null || name == 'null') {
+        name = prompt("Nom de la liste", "");
+        set_liste_name(name)
+    }
+    return name
+}
+
+function set_liste_name(name) {
+    localStorage.setItem(storage_name, name)
+}
+
+function reset_liste_name() {
+    localStorage.setItem(storage_name, null)
+}
 
 // ------------------------------------- REQ
 
@@ -45,6 +63,7 @@ function add_item() {
 // ------------------------------------- GX
 
 function draw_list() {
+    $('.renBtn').html(liste_name())
     $('.content').html('')
     var rev_list = liste.slice().reverse();
     for(var key in rev_list) {
@@ -82,23 +101,55 @@ function create_item_GX(liste_item) {
     return item
 }
 
-// ------------------------------------- ENGINE
+// ------------------------------------- DATA PERENITY
 
 function save_liste(callback) {
-    boolMaster_write_key(liste_name, liste, callback)
+    console.log("saving liste",liste_name())
+    boolMaster_write_key(liste_name(), liste, callback)
+}
+
+function rename_liste(new_name, callback) {
+    load_liste(function(liste_data) {
+        boolMaster_key_exists(new_name,function(resp){
+            if(resp) {
+                callback(null)
+            } else {
+                remove_liste(function(){
+                    set_liste_name(new_name)
+                    save_liste(function(){
+                        callback(new_name)
+                    })
+                })
+            }
+        })
+    })
 }
 
 function load_liste(callback) {
-    boolMaster_key_exists(liste_name,function(resp){
+    boolMaster_key_exists(liste_name(),function(resp){
         if(!resp) {
-            save_liste(function(){
-                callback([])
-            })
+            var ok = confirm("La liste "+liste_name()+" n'existe pas, souhaitez vous la créer")
+            if(ok) {
+                save_liste(function(){
+                    callback([])
+                })
+            } else {
+                reset_liste_name()
+                load_liste(callback)
+            }
         } else {
-            boolMaster_read_key(liste_name,callback)
+            boolMaster_read_key(liste_name(),callback)
         }
     })
 }
+
+function remove_liste(callback) {
+    var name = liste_name()
+    reset_liste_name()
+    boolMaster_key_remove(name, callback)
+}
+
+// ------------------------------------- UPDATERS
 
 var inhib = false
 
@@ -125,14 +176,34 @@ function update_liste() {
     })
 }
 
+// ------------------------------------- INIT
+
 function init() {
-    $('.addBtn').click(add_item)
+
     init_boolMaster('hugocastaneda.fr/boolMaster2/api.php')
     update_liste()
+
+    $('.addBtn').click(add_item)
+    $('.renBtn').click(function(){
+        var new_name = prompt("Nouveau nom de liste",liste_name())
+        rename_liste(new_name,function(done_name){
+            if(done_name != new_name) {
+                alert('Le nom "'+new_name+'" est déjà existant')
+            } else {
+                update_liste()
+            }
+        })
+    })
+    $('.newBtn').click(function(){
+        reset_liste_name()
+        location.reload()
+    })
+    $('.remBtn').click(function(){
+        if(confirm('Souhaitez vous supprimer la liste "'+liste_name()+'"'))
+            remove_liste(update_liste)
+    })
     
     setInterval(loop_updater,update_time_ms)
 }
 
-// ------------------------------------- MAIN
-
-init()
+setTimeout(init)

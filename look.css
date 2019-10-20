@@ -17,6 +17,47 @@ body {
     text-align: center;
     color:#fff;
     font-size: 80px;
+    top:0px;
+    left:0px;
+}
+
+.newBtn {
+    top:-5px;
+    left:0px;
+    position: fixed;
+    height:60px;
+    width:60px;
+    padding:20px;
+    background: rgb(56, 142, 255);
+    opacity: 0.5;
+    text-align: center;
+    color:#fff;
+    font-size: 50px;
+}
+
+.renBtn {
+    top:10px;
+    right:20px;
+    position: fixed;
+    height:50px;
+    padding:20px;
+    opacity: 0.5;
+    text-align: center;
+    color:#fff;
+    font-size: 30px;
+}
+
+.remBtn {
+    top:-5px;
+    left:100px;
+    position: fixed;
+    height:60px;
+    width:60px;
+    padding:20px;
+    opacity: 0.5;
+    text-align: center;
+    color:#fff;
+    font-size: 50px;
 }
 
 .content {
