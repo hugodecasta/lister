@@ -10,14 +10,31 @@ var liste = []
 
 var storage_name = 'lister_liste_name'
 
+function liste_name_is_null(name) {
+    return (name == null || name == 'null')
+}
+
 function liste_name() {
-    
     var name = localStorage.getItem(storage_name)
-    while(name == null || name == 'null') {
+    while(liste_name_is_null(name)) {
         name = prompt("Nom de la liste", "");
         set_liste_name(name)
     }
     return name
+}
+
+function prompt_rename_list() {
+    var current_name = liste_name()
+    var new_name = prompt("Nouveau nom de liste",liste_name())
+    if(liste_name_is_null(new_name) || new_name == current_name)
+        return
+    rename_liste(new_name,function(done_name){
+        if(done_name != new_name) {
+            alert('Le nom "'+new_name+'" est déjà existant')
+        } else {
+            update_liste()
+        }
+    })
 }
 
 function set_liste_name(name) {
@@ -184,16 +201,7 @@ function init() {
     update_liste()
 
     $('.addBtn').click(add_item)
-    $('.renBtn').click(function(){
-        var new_name = prompt("Nouveau nom de liste",liste_name())
-        rename_liste(new_name,function(done_name){
-            if(done_name != new_name) {
-                alert('Le nom "'+new_name+'" est déjà existant')
-            } else {
-                update_liste()
-            }
-        })
-    })
+    $('.renBtn').click(prompt_rename_list)
     $('.newBtn').click(function(){
         reset_liste_name()
         location.reload()
