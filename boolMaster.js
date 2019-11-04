@@ -1,7 +1,8 @@
 var boolMaster_host = null
+var boolMaster_http_method = 'https'
 
 function __bm_send(method, kwargs, callback) {
-    var url = 'https://'+boolMaster_host+'/?method='+method
+    var url = boolMaster_http_method+'://'+boolMaster_host+'/?method='+method
     for(var arg in kwargs) {
         var value = kwargs[arg]
         url += '&'+arg+'='+value
@@ -12,8 +13,15 @@ function __bm_send(method, kwargs, callback) {
     })
 }
 
-function init_boolMaster(host) {
+function init_boolMaster(host, http_method) {
+    if(http_method == undefined)
+        http_method = 'https'
     boolMaster_host = host
+    boolMaster_http_method = http_method
+}
+
+function boolMaster_set_http_method(method) {
+    http_method = method
 }
 
 function boolMaster_read_key(key, callback) {
