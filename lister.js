@@ -121,7 +121,6 @@ function create_item_GX(liste_item) {
 // ------------------------------------- DATA PERENITY
 
 function save_liste(callback) {
-    console.log("saving liste",liste_name())
     boolMaster_write_key(liste_name(), liste, callback)
 }
 
@@ -143,7 +142,9 @@ function rename_liste(new_name, callback) {
 }
 
 function load_liste(callback) {
+
     boolMaster_key_exists(liste_name(),function(resp){
+
         if(!resp) {
             var ok = confirm("La liste "+liste_name()+" n'existe pas, souhaitez vous la créer")
             if(ok) {
@@ -168,20 +169,31 @@ function remove_liste(callback) {
 
 // ------------------------------------- UPDATERS
 
-var inhib = false
+var looping = false
+var loopingInterval = null
 
-function loop_updater() {
-    if(inhib) {
-        inhib = false
-        return
+function start_looper() {
+    looping = true
+    if(loopingInterval == null) {
+        loopingInterval = setInterval(function(){
+            if(!looping) {
+                clearInterval(loopingInterval)
+            }
+        },update_time_ms)
     }
-    inhib = true
+}
+
+function stop_looper() {
+    looping = false
+}
+
+function loop_updater(callback) {
     load_liste(function(data_liste){
         if(data_liste.length != liste.length) {
             liste = data_liste
             draw_list()
-            inhib = false
         }
+        callback()
     })
 }
 
@@ -197,7 +209,7 @@ function update_liste() {
 
 function init() {
 
-    init_boolMaster('hugocastaneda.fr/boolMaster2/api.php')
+    init_boolMaster('localhost/boolMaster2/api.php','http')
     update_liste()
 
     $('.addBtn').click(add_item)
@@ -207,11 +219,16 @@ function init() {
         location.reload()
     })
     $('.remBtn').click(function(){
-        if(confirm('Souhaitez vous supprimer la liste "'+liste_name()+'"'))
-            remove_liste(update_liste)
+        if(confirm('Souhaitez vous supprimer la liste "'+liste_name()+'"')) {
+            stop_looper()
+            remove_liste(function(){
+                update_liste()
+                start_looper()
+            })
+        }
     })
-    
-    setInterval(loop_updater,update_time_ms)
+
+    start_looper()
 }
 
 setTimeout(init)
