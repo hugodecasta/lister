@@ -209,7 +209,7 @@ function update_liste() {
 
 function init() {
 
-    init_boolMaster('localhost/boolMaster2/api.php','http')
+    init_boolMaster('localhost/boolMaster2/api.php','https')
     update_liste()
 
     $('.addBtn').click(add_item)
