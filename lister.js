@@ -209,7 +209,7 @@ function update_liste() {
 
 function init() {
 
-    init_boolMaster('localhost/boolMaster2/api.php','https')
+    init_boolMaster('hugocastaneda.fr/boolMaster2/api.php','https')
     update_liste()
 
     $('.addBtn').click(add_item)
