@@ -54,12 +54,14 @@ async function get_liste() {
 
 async function set_liste(liste, given_name=null) {
     let name = given_name==null?await get_current_liste_name():given_name
-    return await bm.write_key(name, liste)
+    await bm.write_key(name, liste)
+    bm.trigger_checker(name)
 }
 
 async function remove_liste() {
     let name = await get_current_liste_name()
-    return await bm.key_remove(name)
+    await bm.key_remove(name)
+    bm.trigger_checker(name)
 }
 
 // ------------------------------------- ITEM
@@ -94,6 +96,8 @@ function init_item(name, item) {
     var btnJQ = $('<div>').addClass('trash')
 
     itemJQ.append(textJQ).append(btnJQ)
+    .css('height',0)
+    .css('margin-top',-40)
 
     itemJQ.click(function(){
         if(itemJQ.hasClass('edit'))
@@ -110,6 +114,8 @@ function init_item(name, item) {
     bm.register_checker(name+':'+item.id+':text!changed',function(prop, text) {
         textJQ.html(text)
         itemJQ.addClass('appear')
+        .css('height','')
+        .css('margin-top','')
         setTimeout(function() {
             itemJQ.removeClass('appear')
         },1000)
@@ -122,7 +128,7 @@ function init_item(name, item) {
         },300)
     })
 
-    $('.content').append(itemJQ)
+    $('.content').prepend(itemJQ)
 
 }
 
@@ -130,6 +136,7 @@ function init_item(name, item) {
 
 async function setup_liste() {
 
+    bm.reset_checkers()
     bm.reset_all_checker()
 
     let name = await get_current_liste_name()
@@ -142,7 +149,7 @@ async function setup_liste() {
     })
 
     let rem_id = bm.register_checker(name+'!removed',async function() {
-        console.log('removed !!')
+        console.log('removed !!',name,name+'!removed')
         await set_current_list_name(null)
         await setup_liste()
         bm.unregister_checker(add_id)
