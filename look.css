@@ -5,60 +5,58 @@ body {
     font-family: 'Roboto', sans-serif;
     font-size: 30px;
     color:rgb(56, 142, 255);
+    line-height: normal;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* ------------------------------------------------- */
 
-.addBtn {
-    position: fixed;
-    height:100px;
-    width:100%;
-    background: #388eff;
-    text-align: center;
-    color:#fff;
-    font-size: 80px;
-    top:0px;
-    left:0px;
+.menu {
+    background: #536dfe;
+    height: 76px;
 }
 
-.newBtn {
-    top:-5px;
-    left:0px;
-    position: fixed;
-    height:60px;
-    width:60px;
-    padding:20px;
-    background: rgb(56, 142, 255);
-    opacity: 0.5;
-    text-align: center;
-    color:#fff;
-    font-size: 50px;
-}
+/* ------------------------------------------------- */
 
-.renBtn {
+.mdl-button {
+    position: absolute;
+}
+.mdl-button--fab.mdl-button--colored {
     top:10px;
-    right:20px;
-    position: fixed;
-    height:50px;
-    padding:20px;
-    opacity: 0.5;
-    text-align: center;
-    color:#fff;
-    font-size: 30px;
+    background: #fff;
+    color: #233fdf;
+}
+.mdl-button--flat.mdl-button--colored {
+    color: #fff;
+    top:20px;
+}
+.name {
+    margin:0px;
 }
 
-.remBtn {
-    top:-5px;
-    left:100px;
-    position: fixed;
-    height:60px;
-    width:60px;
-    padding:20px;
-    opacity: 0.5;
-    text-align: center;
-    color:#fff;
-    font-size: 50px;
+/* ------------------------------------------------- */
+
+.back {
+    left:10px;
 }
+.remove {
+    left:70px;
+}
+.add {
+    left:calc(50% - 45px);
+}
+.name {
+    top:23px !important;
+    right:85px;
+}
+
+/* ------------------------------------------------- */
+
+.mdl-spinner--single-color div {
+    border-color: #fff;
+}
+
+/* ------------------------------------------------- */
 
 .content {
     position: fixed;
