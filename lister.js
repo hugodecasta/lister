@@ -28,12 +28,38 @@ function get_spinner() {
 
 let gsi = new GoogleSignIn('1070660703362-5m1lo7rov7tn5ubo8oti29i7aqvu89ju.apps.googleusercontent.com')
 let bm = new BoolMaster('BoolMaster/api.php')
+let hcbm = new BoolMaster('https://hugocastaneda.fr/liste/BoolMaster/api.php')
 let mirror = new Mirror(bm)
 
 // ------------------------------------------ DATA
 
+function create_new_list(name, items={}) {
+    let id = 'listid@'+parseInt(Math.random()*10000)+name
+    let list = {id,name,items:items}
+    return list
+}
+
 async function get_current_list_id() {
+
     let user_connector = await get_user_connector()
+
+    let obj = {"courses":{"1572550753757.5":{"text":"cloche a fromage ","id":1572550753757.5},"1576344107371.4426":{"text":"casseroles","id":1576344107371.4426},"1576668392958.4045":{"text":"litière ","id":1576668392958.4045},"1576668399117.815":{"text":"fromage","id":1576668399117.815},"1576668404732.8713":{"text":"legume","id":1576668404732.8713},"1576668434261.939":{"text":"steak","id":1576668434261.939},"1576668440638.1575":{"text":"lardon","id":1576668440638.1575},"1576668445621.1255":{"text":"boisson","id":1576668445621.1255}},"contraventions":{"1574184781804.4663":{"text":"07/01","id":1574184781804.4663},"1574184803695.0525":{"text":"28/01","id":1574184803695.0525},"1576344087874.9302":{"text":"19/02","id":1576344087874.9302},"1576344093651.2627":{"text":"27/02","id":1576344093651.2627}},"films":{"1574549811696.4114":{"text":"arnaque à la carte","id":1574549811696.4114},"1574549818612.8223":{"text":"the boss","id":1574549818612.8223},"1575650945473.405":{"text":"old boy","id":1575650945473.405},"1575996364223.4375":{"text":"Mme Doubt Fire","id":1575996364223.4375},"0.45814230498387311576954318473":{"id":"0.45814230498387311576954318473","text":"le diné de cons"}}}
+
+    for(let name in obj) {
+        let sub_list = obj[name]
+        let items = {}
+        for(let idd in sub_list) {
+            let item = sub_list[idd]
+            let name = item.text
+            let id = parseInt(Math.random()*10000)+name
+            let new_item = {id,name}
+            items[id] = new_item
+        }
+        let new_list = create_new_list(name,items)
+        await mirror.create_base(new_list.id,new_list)
+        user_connector.set(['lists_name_linker'],name,new_list.id)
+    }
+
     let current_list_id = user_connector.get([],'current_list_id',null)
     if(current_list_id == null || !await mirror.can_connect(current_list_id)) {
         console.log('cannot connect to current id',current_list_id)
@@ -81,8 +107,8 @@ async function ask_user_list_id() {
     }
     if(!await mirror.can_connect(id)) {
         if(confirm('create list "'+name+'" ?')) {
-            let id = 'listid@'+parseInt(Math.random()*10000)+name
-            let list = {id,name,items:{}}
+            let list = create_new_list(name)
+            let id = list.id
             user_connector.set(['lists_name_linker'],name,id)
             await mirror.create_base(id,list)
             return id
@@ -161,6 +187,7 @@ async function display_list() {
         let remove = $('.remove').unbind()
         let add = $('.add').unbind()
         let name = $('.name').unbind()
+        let link = $('.link').unbind()
         
         // --- CLICK
 
@@ -190,7 +217,11 @@ async function display_list() {
             }
             list_connector.set([],'name',new_name)
             user_connector.del(['lists_name_linker'],old_name)
-            user_connector.set(['lists_name_linker'],new_name,id)
+            user_connector.set(['lists_name_linker'],new_name,current_list_id)
+        })
+
+        link.click(function() {
+            prompt('liste token',current_list_id)
         })
         
         // --- EVT
@@ -208,7 +239,6 @@ async function display_list() {
         })
 
         list_connector.on_event('del_base',function() {
-            console.log('youpse')
             user_connector.del([],'current_list_id')
         })
     })

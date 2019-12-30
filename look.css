@@ -3,7 +3,7 @@ body {
     padding:0px;
     background:#fff;
     font-family: 'Roboto', sans-serif;
-    font-size: 30px;
+    font-size: 25px;
     color:rgb(56, 142, 255);
     line-height: normal;
     -webkit-font-smoothing: antialiased;
@@ -41,6 +41,12 @@ body {
 }
 .remove {
     left:70px;
+}
+.link {
+    top:auto !important;
+    right:10px;
+    bottom:10px;
+    color: #233fdf !important;
 }
 .add {
     left:calc(50% - 45px);
@@ -80,8 +86,8 @@ body {
 
 .item .trash {
     float: right;
-    width:50px;
-    height:50px;
+    width:40px;
+    height:40px;
     margin-right:10px;
     background:url('trash.png');
     background-size: 70% 70%;
