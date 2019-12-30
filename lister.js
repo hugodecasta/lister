@@ -1,95 +1,102 @@
 'use strict'
 
-// ------------------------------------- GLOBAL DATA
+// ------------------------------------------- TO CHANGE
 
-var bm = new BoolMaster('BoolMaster/api.php')
+function round_button(icon,type='fab',more_class='') {
+    let btn = $('<button>').addClass(more_class)
+    .addClass('mdl-button mdl-js-button')
+    .addClass('mdl-button--'+type+' mdl-js-ripple-effect')
+    .css('margin',10)
+    let icon_div =$('<i>').addClass('material-icons').html(icon)
+    btn.append(icon_div)
+    return btn
+}
 
-// ------------------------------------- LISTE NAME
+function text_button(text,type='raised',more_class='') {
+    let btn = $('<button>').addClass(more_class)
+    .addClass('mdl-button mdl-js-button')
+    .addClass('mdl-button--'+type+' mdl-js-ripple-effect')
+    .css('margin',10).html(text)
+    return btn
+}
 
-async function get_current_liste_name() {
-    let name = localStorage.getItem('lister_current_list_name')
+function get_spinner() {
+    return $('<div class="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active is-upgraded" data-upgraded=",MaterialSpinner"><div class="mdl-spinner__layer mdl-spinner__layer-1"><div class="mdl-spinner__circle-clipper mdl-spinner__left"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__gap-patch"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__circle-clipper mdl-spinner__right"><div class="mdl-spinner__circle"></div></div></div><div class="mdl-spinner__layer mdl-spinner__layer-2"><div class="mdl-spinner__circle-clipper mdl-spinner__left"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__gap-patch"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__circle-clipper mdl-spinner__right"><div class="mdl-spinner__circle"></div></div></div><div class="mdl-spinner__layer mdl-spinner__layer-3"><div class="mdl-spinner__circle-clipper mdl-spinner__left"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__gap-patch"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__circle-clipper mdl-spinner__right"><div class="mdl-spinner__circle"></div></div></div><div class="mdl-spinner__layer mdl-spinner__layer-4"><div class="mdl-spinner__circle-clipper mdl-spinner__left"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__gap-patch"><div class="mdl-spinner__circle"></div></div><div class="mdl-spinner__circle-clipper mdl-spinner__right"><div class="mdl-spinner__circle"></div></div></div></div>')
+}
 
+// ------------------------------------------ VAR
+
+let gsi = new GoogleSignIn('1070660703362-5m1lo7rov7tn5ubo8oti29i7aqvu89ju.apps.googleusercontent.com')
+let bm = new BoolMaster('BoolMaster/api.php')
+let mirror = new Mirror(bm)
+
+// ------------------------------------------ DATA
+
+async function get_current_list_id() {
+    let user_connector = await get_user_connector()
+    let current_list_id = user_connector.get([],'current_list_id',null)
+    if(current_list_id == null || !await mirror.can_connect(current_list_id)) {
+        console.log('cannot connect to current id',current_list_id)
+        current_list_id = await ask_user_list_id()
+        user_connector.set([],'current_list_id',current_list_id)
+    }
+    return current_list_id
+}
+
+// ------------------------------------------ MIRROR
+
+async function get_user_connector() {
+    let profile = await gsi.get_profile_data()
+    let user_connector_id = 'user'+profile.id
+    await mirror.create_base(user_connector_id,{lists_name_linker:{}})
+    return await mirror.connect(user_connector_id)
+}
+
+async function get_list_connector(list_id) {
+    let list_connector = await mirror.connect(list_id)
+    return list_connector
+}
+
+// ------------------------------------------ DISP
+
+async function ask_user_list_id() {
+    let user_connector = await get_user_connector()
+    let name = prompt('list name or token')
     if(name == null) {
-        let prompted_name = await prompt_list_name()
-        if(prompted_name == '') {
-            prompted_name = null
+        return await ask_user_list_id()
+    }
+    let id = null
+    if(name.includes('listid@')) {
+        if(await mirror.can_connect(name)) {
+            let list_connector = await get_list_connector(name)
+            let true_name = list_connector.get([],'name')
+            if(!confirm('Link list "'+true_name+'"')) {
+                return await ask_user_list_id()
+            }
+            id = name
+            user_connector.set(['lists_name_linker'],name,true_name)
         }
-        await set_current_list_name(prompted_name)
-        return await get_current_liste_name()
+    } else {
+        id = user_connector.get(['lists_name_linker'],name,null)
     }
-
-    if(! await bm.key_exists(name)) {
-        let create = confirm('la liste "'+name+'" n\'existe pas, souhaitez vous la créer ?')
-        if(create) {
-            await set_liste({}, name)
-        } else {
-            await set_current_list_name(null)
+    if(!await mirror.can_connect(id)) {
+        if(confirm('create list "'+name+'" ?')) {
+            let id = 'listid@'+parseInt(Math.random()*10000)+name
+            let list = {id,name,items:{}}
+            user_connector.set(['lists_name_linker'],name,id)
+            await mirror.create_base(id,list)
+            return id
         }
-        return await get_current_liste_name()
+        return await ask_user_list_id()
     }
-
-    return name
+    return id
 }
 
-async function set_current_list_name(liste_name) {
-    if(liste_name == null) {
-        localStorage.removeItem('lister_current_list_name')
-        return
-    }
-    localStorage.setItem('lister_current_list_name', liste_name)
-}
+function init_item(item, list_connector) {
 
-// ------------------------------------- LISTE
+    let name = item.name
 
-async function prompt_list_name(name='') {
-    let given_name = prompt('nom de la liste',name)
-    return given_name
-}
-
-async function get_liste() {
-    let name = await get_current_liste_name()
-    let liste = await bm.read_key(name)
-    return liste
-}
-
-async function set_liste(liste, given_name=null) {
-    let name = given_name==null?await get_current_liste_name():given_name
-    await bm.write_key(name, liste)
-    bm.trigger_checker(name)
-}
-
-async function remove_liste() {
-    let name = await get_current_liste_name()
-    await bm.key_remove(name)
-    bm.trigger_checker(name)
-}
-
-// ------------------------------------- ITEM
-
-async function create_item_obj(item_name) {
-    let id = Math.random()+''+Date.now()
-    let item_obj = {
-        id:id,
-        text:item_name
-    }
-    return item_obj
-}
-
-async function set_item(item) {
-    let liste = await get_liste()
-    liste[item.id] = item
-    await set_liste(liste)
-}
-
-async function remove_item(item) {
-    let liste = await get_liste()
-    delete liste[item.id]
-    await set_liste(liste)
-}
-
-// ------------------------------------- ITEM MANAGEMENT
-
-function init_item(name, item) {
+    // --- JQ
 
     var itemJQ = $('<div>').addClass('item')
     var textJQ = $('<div>').addClass('text')
@@ -99,6 +106,10 @@ function init_item(name, item) {
     .css('height',0)
     .css('margin-top',-40)
 
+    $('.content').prepend(itemJQ)
+
+    // --- CLICK
+
     itemJQ.click(function(){
         if(itemJQ.hasClass('edit'))
             itemJQ.removeClass('edit')
@@ -107,11 +118,19 @@ function init_item(name, item) {
     })
 
     btnJQ.click(async function(){
-        await remove_item(item)
-        bm.trigger_checker(name+':'+item.id+'!removed')
+        list_connector.del(['items'],item.id)
     })
 
-    bm.register_checker(name+':'+item.id+':text!changed',function(prop, text) {
+    // --- EVT
+
+    list_connector.on_prop('del',['items'],item.id, function() {
+        itemJQ.addClass('disappear')
+        setTimeout(function(){
+            itemJQ.remove()
+        },300)
+    })
+
+    list_connector.on_prop('set',['items',item.id],'name', function(text) {
         textJQ.html(text)
         itemJQ.addClass('appear')
         .css('height','')
@@ -121,88 +140,93 @@ function init_item(name, item) {
         },1000)
     })
 
-    bm.register_checker(name+':'+item.id+'!removed',function() {
-        itemJQ.addClass('disappear')
-        setTimeout(function(){
-            itemJQ.remove()
-        },300)
+}
+
+async function display_list() {
+
+    return new Promise(async function(end) {
+    
+        let current_list_id = await get_current_list_id()
+        let user_connector = await get_user_connector()
+
+        $('.name').html(get_spinner())
+        $('.content').html('')
+        let list_connector = await get_list_connector(current_list_id)
+
+        console.log('open',current_list_id)
+
+        // --- JQ
+
+        let back = $('.back').unbind()
+        let remove = $('.remove').unbind()
+        let add = $('.add').unbind()
+        let name = $('.name').unbind()
+        
+        // --- CLICK
+
+        back.click(function() {
+            user_connector.del([],'current_list_id')
+        })
+
+        remove.click(function() {
+            list_connector.delete()
+        })
+
+        add.click(function() {
+            let item_name = prompt('element name')
+            if(item_name == null) {
+                return
+            }
+            let id = parseInt(Math.random()*10000)+item_name
+            let item = {id,name:item_name}
+            list_connector.set(['items'],id,item)
+        })
+
+        name.click(function() {
+            let old_name = list_connector.get([],'name')
+            let new_name = prompt('new list name',old_name)
+            if(new_name == null) {
+                return
+            }
+            list_connector.set([],'name',new_name)
+            user_connector.del(['lists_name_linker'],old_name)
+            user_connector.set(['lists_name_linker'],new_name,id)
+        })
+        
+        // --- EVT
+
+        list_connector.on_path('add',['items'],function(id, new_item) {
+            init_item(new_item, list_connector)
+        })
+
+        list_connector.on_prop('set',[],'name',function(new_name) {
+            name.html(new_name)
+        })
+
+        user_connector.on_prop('del',[],'current_list_id',function() {
+            end()
+        })
+
+        list_connector.on_event('del_base',function() {
+            console.log('youpse')
+            user_connector.del([],'current_list_id')
+        })
     })
 
-    $('.content').prepend(itemJQ)
-
 }
 
-// ------------------------------------- LISTE INIT
+// ------------------------------------------ CORE
 
-async function setup_liste() {
-
-    bm.reset_checkers()
-    bm.reset_all_checker()
-
-    let name = await get_current_liste_name()
-    $('.renBtn').html(name)
-
-    $('.content').html('')
-
-    let add_id = bm.register_checker(name+'!added',function(id, item) {
-       init_item(name, item)
-    })
-
-    let rem_id = bm.register_checker(name+'!removed',async function() {
-        console.log('removed !!',name,name+'!removed')
-        await set_current_list_name(null)
-        await setup_liste()
-        bm.unregister_checker(add_id)
-        bm.unregister_checker(rem_id)
-     })
-}
-
-// ------------------------------------- GX ACTIONS
-
-async function gx_add_item() {
-    let item_name = prompt('nouvel élément')
-    let item_obj = await create_item_obj(item_name)
-    await set_item(item_obj)
-}
-
-async function gx_rename_liste() {
-    let current_name = await get_current_liste_name()
-    let new_name = await prompt_list_name(current_name)
-    if(new_name == current_name || new_name==null) {
-        return
+async function satisfy_user() {
+    while(true) {
+        await display_list()
+        console.log('shit restart')
     }
-    let liste = await get_liste()
-    await remove_liste()
-    await set_liste(liste,new_name)
-    await set_current_list_name(new_name)
-
-    await setup_liste()
 }
-
-async function gx_new_liste() {
-    await set_current_list_name(null)
-    setup_liste()
-}
-
-async function gx_remove_liste() {
-    let name = await get_current_liste_name()
-    if(!confirm('souhaitez vous réellement supprimer la liste "'+name+'"')) {
-        return
-    }
-    await remove_liste()
-}
-
-// ------------------------------------- INIT
 
 async function main() {
-    
-    $('.addBtn').click(gx_add_item)
-    $('.renBtn').click(gx_rename_liste)
-    $('.newBtn').click(gx_new_liste)
-    $('.remBtn').click(gx_remove_liste)
-
-    await setup_liste()
-
+    await satisfy_user()
 }
-
-main()
+$(document).ready(function() {
+    main()
+});
