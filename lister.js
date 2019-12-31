@@ -121,8 +121,6 @@ async function ask_user_list_id() {
 
 function init_item(item, list_connector) {
 
-    let name = item.name
-
     // --- JQ
 
     var itemJQ = $('<div>').addClass('item')
@@ -197,7 +195,9 @@ async function display_list() {
         })
 
         remove.click(function() {
-            list_connector.delete()
+            if(confirm('delete list "'+user_connector.get([],'name')+'" ?')) {
+                list_connector.delete()
+            }
         })
 
         add.click(function() {
