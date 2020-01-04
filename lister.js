@@ -101,9 +101,10 @@ async function ask_user_list_id() {
                 return await ask_user_list_id()
             }
             id = name
-            user_connector.set(['lists_name_linker'],name,true_name)
+            user_connector.set(['lists_name_linker'],true_name,name)
         }
     } else {
+        console.log(name,user_connector.get_base())
         id = user_connector.get(['lists_name_linker'],name,null)
     }
     if(!await mirror.can_connect(id)) {
@@ -187,6 +188,8 @@ async function display_list() {
         let add = $('.add').unbind()
         let name = $('.name').unbind()
         let link = $('.link').unbind()
+
+        var last_name = null
         
         // --- CLICK
 
@@ -195,7 +198,7 @@ async function display_list() {
         })
 
         remove.click(function() {
-            if(confirm('delete list "'+user_connector.get([],'name')+'" ?')) {
+            if(confirm('delete list "'+list_connector.get([],'name')+'" ?')) {
                 list_connector.delete()
             }
         })
@@ -233,6 +236,7 @@ async function display_list() {
 
         list_connector.on_prop('set',[],'name',function(new_name) {
             name.html(new_name)
+            last_name = new_name
         })
 
         user_connector.on_prop('del',[],'current_list_id',function() {
@@ -240,6 +244,7 @@ async function display_list() {
         })
 
         list_connector.on_event('del_base',function() {
+            user_connector.del(['lists_name_linker'],last_name)
             user_connector.del([],'current_list_id')
         })
     })

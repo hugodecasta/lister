@@ -1,9 +1,9 @@
 {
     "short_name": "Lister",
     "name": "Lister",
-    "theme_color": "#ffffff",
-    "background_color": "#ffffff",
-    "display": "fullscreen",
+    "theme_color": "#536dfe",
+    "background_color": "#536dfe",
+    "display": "standalone",
     "Scope": "/",
     "orientation": "portrait",
     "icons": [
